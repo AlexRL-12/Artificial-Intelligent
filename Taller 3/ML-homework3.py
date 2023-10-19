@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore")
 data = pd.read_csv('imdb_top_1000.csv')
 
 # Seleccionar las columnas requeridas
-colInteres = ['Series_Title', 'Released_Year', 'Certificate', 'Runtime', 'Genre', 'IMDB_Rating', 'Overview', 'Meta_score', 'Director']
+colInteres = ['Released_Year', 'Runtime', 'IMDB_Rating', 'Meta_score', 'No_of_Votes', 'Gross']
 datainteres = data[colInteres]
 datainteres = datainteres.dropna()
 
