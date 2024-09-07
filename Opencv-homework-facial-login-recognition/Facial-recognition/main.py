@@ -9,6 +9,7 @@ import math
 import os
 import face_recognition as fr
 
+
 # Face Code
 def Code_Face(images):
     listacod = []
@@ -616,9 +617,9 @@ def Log():
 
 
 # Path
-OutFolderPathUser = 'C:/Users/Alex/PycharmProjects/pythonProject/DataBase/Users'
-PathUserCheck = 'C:/Users/Alex/PycharmProjects/pythonProject/DataBase/Users/'
-OutFolderPathFace = 'C:/Users/Alex/PycharmProjects/pythonProject/DataBase/Faces'
+OutFolderPathUser = (os.getcwd()+'/Facial-recognition/DataBase/Users').replace("\\","/")
+PathUserCheck = (os.getcwd()+'/Facial-recognition/DataBase/Users/').replace("\\","/")
+OutFolderPathFace = (os.getcwd()+'/Facial-recognition/DataBase/Faces').replace("\\","/")
 
 
 # List
@@ -652,12 +653,13 @@ detector = FaceObject.FaceDetection(min_detection_confidence= 0.5, model_selecti
 
 # Img OpenCV
 # Leer imagenes
-img_info = cv2.imread("C:/Users/Alex/PycharmProjects/pythonProject/SetUp/Info.png")
-img_check = cv2.imread("C:/Users/Alex/PycharmProjects/pythonProject/SetUp/check.png")
-img_step0 = cv2.imread("C:/Users/Alex/PycharmProjects/pythonProject/SetUp/Step0.png")
-img_step1 = cv2.imread("C:/Users/Alex/PycharmProjects/pythonProject/SetUp/Step1.png")
-img_step2 = cv2.imread("C:/Users/Alex/PycharmProjects/pythonProject/SetUp/Step2.png")
-img_liche = cv2.imread("C:/Users/Alex/PycharmProjects/pythonProject/SetUp/LivenessCheck.png")
+
+# img_info = cv2.imread("C:/Users/Alex/PycharmProjects/pythonProject/SetUp/Info.png")
+img_check = cv2.imread((os.getcwd()+'/Facial-recognition/SetUp/check.png').replace("\\","/"))
+img_step0 = cv2.imread((os.getcwd()+'/Facial-recognition/SetUp/Step0.png').replace("\\","/"))
+img_step1 = cv2.imread((os.getcwd()+'/Facial-recognition/SetUp/Step1.png').replace("\\","/"))
+img_step2 = cv2.imread((os.getcwd()+'/Facial-recognition/SetUp/Step2.png').replace("\\","/"))
+img_liche = cv2.imread((os.getcwd()+'/Facial-recognition/SetUp/LivenessCheck.png').replace("\\","/"))
 
 
 # Ventana principal
@@ -665,13 +667,15 @@ pantalla = Tk()
 pantalla.title("FACE RECOGNITION SYSTEM")
 pantalla.geometry("1280x720")
 
+
+
 # Fondo
-imagenF = PhotoImage(file="C:/Users/Alex/PycharmProjects/pythonProject/SetUp/Inicio.png")
+imagenF = PhotoImage(file = (os.getcwd()+'/Facial-recognition/SetUp/Inicio.png').replace("\\","/"))
 background = Label(image = imagenF, text = "Inicio")
 background.place(x = 0, y = 0, relwidth = 1, relheight = 1)
 
 # Fondo 2
-imagenB = PhotoImage(file="C:/Users/Alex/PycharmProjects/pythonProject/SetUp/Back2.png")
+imagenB = PhotoImage(file = (os.getcwd()+'/Facial-recognition/SetUp/Back2.png').replace("\\","/"))
 
 # Input Text
 # Register
@@ -687,12 +691,12 @@ InputPassReg.place(x= 305, y = 540)
 
 # Botones
 # Registro
-imagenBR = PhotoImage(file="C:/Users/Alex/PycharmProjects/pythonProject/SetUp/BtSign.png")
+imagenBR = PhotoImage(file=(os.getcwd()+'/Facial-recognition/SetUp/BtSign.png').replace("\\","/"))
 BtReg = Button(pantalla, text="Registro", image=imagenBR, height="40", width="200", command=Log)
 BtReg.place(x = 270, y = 580)
 
 # Inicio de sesion
-imagenBL = PhotoImage(file="C:/Users/Alex/PycharmProjects/pythonProject/SetUp/BtLogin.png")
+imagenBL = PhotoImage(file=(os.getcwd()+'/Facial-recognition/SetUp/Btlogin.png').replace("\\","/"))
 BtSign = Button(pantalla, text="Sign", image=imagenBL, height="40", width="200", command=Sign)
 BtSign.place(x = 770, y = 580)
 
