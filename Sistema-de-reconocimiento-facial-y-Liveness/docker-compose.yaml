@@ -1,0 +1,13 @@
+services:
+  database:
+    image: postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${BD_NAME}
+    ports:
+      - '5433:5432'
+    volumes:
+      - db:/var/lib/postgresql/data
+volumes:
+  db:

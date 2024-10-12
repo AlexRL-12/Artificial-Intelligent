@@ -1,0 +1,8 @@
+/venv
+/db
+
+.env
+
+*.pyd
+*.pyc
+*.pth
