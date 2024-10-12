@@ -9,3 +9,13 @@ class UserRepository:
 
     self.cursor.execute(sql, values)
     self.connection.commit()
+
+  def find_user_by_username(self, username):
+    if not username:
+      return None
+
+    sql = 'SELECT * FROM "user" WHERE UPPER(username) = UPPER(%s)'
+    values = (username,)
+    print(sql, values)
+    self.cursor.execute(sql, values)
+    return self.cursor.fetchone()

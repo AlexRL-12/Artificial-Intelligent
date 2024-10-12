@@ -6,3 +6,7 @@
 *.pyd
 *.pyc
 *.pth
+
+/DataBase/Entraces/*
+/DataBase/Faces/*
+/DataBase/Users/*

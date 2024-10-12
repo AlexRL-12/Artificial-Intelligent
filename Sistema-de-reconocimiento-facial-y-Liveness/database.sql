@@ -17,7 +17,7 @@ CREATE TABLE "user" (
 CREATE TABLE "entrance" (
   "id" serial PRIMARY KEY NOT NULL,
   "user_id" integer,
-  "date" timestamp NOT NULL,
+  "date" timestamp NOT NULL DEFAULT now(),
   "file_path" varchar NOT NULL,
   "allowed" boolean
 );

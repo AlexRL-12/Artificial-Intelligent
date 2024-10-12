@@ -10,9 +10,12 @@ import os
 import face_recognition as fr
 from database import DatabaseConnection
 from home_access.users.user_repository import UserRepository
-import time
+from home_access.entrances.entrance_repository import EntranceRepository
+import uuid
 
 connection = DatabaseConnection().connect()
+userRepository = UserRepository(connection)
+entranceRepository = EntranceRepository(connection)
 
 # Face Code
 def Code_Face(images):
@@ -46,12 +49,26 @@ def Close_Windows2():
     pantalla3.destroy()
 
 # Profile
-def Profile():
-    global step, conteo, UserName, OutFolderPathUser
+def Profile(username, image_path):
+    global step, conteo, OutFolderPathUser
     # Reset Variables
     conteo = 0
     step = 0
 
+    allowed = False; user_id = None; file_path = image_path
+    user = userRepository.find_user_by_username(username)
+
+    if user:
+        user_id = user[0]
+        name = user[1]
+        username = user[2]
+        allowed = True
+
+        print_allowed_screen(username, name)
+
+    entranceRepository.create(user_id, file_path, allowed)
+
+def print_allowed_screen(username, name):
     pantalla4 = Toplevel(pantalla)
     pantalla4.title("BIOMETRIC SIGN")
     pantalla4.geometry("1280x720")
@@ -59,39 +76,28 @@ def Profile():
     back = Label(pantalla4, image=imagenB, text="Back")
     back.place(x=0, y=0, relwidth=1, relheight=1)
 
-    # Archivo
-    UserFile = open(f"{OutFolderPathUser}/{UserName}.txt", 'r')
-    InfoUser = UserFile.read().split(',')
-    Name = InfoUser[0]
-    User = InfoUser[1]
-    Pass = InfoUser[2]
-    UserFile.close()
-
-    # Check
-    if User in clases:
         # Interfaz
-        texto1 = Label(pantalla4, text=f"BIENVENIDO {Name}")
-        texto1.place(x=580, y=50)
+    texto1 = Label(pantalla4, text=f"BIENVENIDO {name}")
+    texto1.place(x=580, y=50)
         # Label
         # Video
-        lblImgUser = Label(pantalla4)
-        lblImgUser.place(x=490, y=80)
+    lblImgUser = Label(pantalla4)
+    lblImgUser.place(x=490, y=80)
 
         # Imagen
-        PosUserImg = clases.index(User)
-        UserImg = images[PosUserImg]
+    PosUserImg = clases.index(username)
+    UserImg = images[PosUserImg]
 
-        ImgUser = Image.fromarray(UserImg)
+    ImgUser = Image.fromarray(UserImg)
         #
-        ImgUser = cv2.imread(f"{OutFolderPathFace}/{User}.png")
-        ImgUser = cv2.cvtColor(ImgUser, cv2.COLOR_RGB2BGR)
-        ImgUser = Image.fromarray(ImgUser)
+    ImgUser = cv2.imread(f"{OutFolderPathFace}/{username}.png")
+    ImgUser = cv2.cvtColor(ImgUser, cv2.COLOR_RGB2BGR)
+    ImgUser = Image.fromarray(ImgUser)
         #
-        IMG = ImageTk.PhotoImage(image=ImgUser)
+    IMG = ImageTk.PhotoImage(image=ImgUser)
 
-        lblImgUser.configure(image=IMG)
-        lblImgUser.image = IMG
-
+    lblImgUser.configure(image=IMG)
+    lblImgUser.image = IMG
 
 # Register Biometric
 def Log_Biometric():
@@ -294,7 +300,7 @@ def Log_Biometric():
 
 # Sign Biometric
 def Sign_Biometric():
-    global pantalla, pantalla3, conteo, parpadeo, img_info, step, UserName, prueba
+    global pantalla, pantalla3, conteo, parpadeo, img_info, step, user_name, prueba
 
     # Leemos la videocaptura
     if cap is not None:
@@ -487,12 +493,17 @@ def Sign_Biometric():
                                                 # Min
                                                 min = np.argmin(simi)
 
+                                                user_name = None
+                                                unique_id = uuid.uuid4().__str__()
+                                                imagePath = f"{OutFolderPathEntrace}/{unique_id}.png"
+                                                image = frameCopy[yi:yf, xi:xf]
+                                                cv2.imwrite(imagePath, image)
                                                 # User
                                                 if Match[min]:
                                                     # UserName
-                                                    UserName = clases[min].upper()
+                                                    user_name = clases[min].upper()
 
-                                                    Profile()
+                                                Profile(user_name, imagePath)
 
 
                             # Close Window
@@ -624,8 +635,6 @@ def Log():
             pantalla2.wait_variable('image_path')
             image_path = pantalla2.getvar('image_path')
 
-            userRepository = UserRepository(connection)
-
             if image_path is not None:
                 userRepository.create(
                     name=RegName,
@@ -639,6 +648,7 @@ def Log():
 OutFolderPathUser = (os.getcwd()+'/DataBase/Users').replace("\\","/")
 PathUserCheck = (os.getcwd()+'/DataBase/Users/').replace("\\","/")
 OutFolderPathFace = (os.getcwd()+'/DataBase/Faces').replace("\\","/")
+OutFolderPathEntrace = (os.getcwd()+'/DataBase/Entraces').replace("\\","/")
 
 
 # List
@@ -701,7 +711,7 @@ InputNameReg.place(x= 110, y = 320)
 InputUserReg = Entry(pantalla)
 InputUserReg.place(x= 110, y = 430)
 # Pass
-InputPassReg = Entry(pantalla)
+InputPassReg = Entry(pantalla, show="*")
 InputPassReg.place(x= 110, y = 540)
 
 # Botones
