@@ -10,7 +10,8 @@ CREATE TABLE "user" (
   "username" varchar NOT NULL,
   "password" varchar NOT NULL,
   "file_path" varchar NOT NULL,
-  "house_id" int NOT NULL
+  "house_id" int NOT NULL,
+  "created_at" TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE "entrance" (

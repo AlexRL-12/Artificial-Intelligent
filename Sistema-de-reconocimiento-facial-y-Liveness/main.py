@@ -8,6 +8,11 @@ import mediapipe as mp
 import math
 import os
 import face_recognition as fr
+from database import DatabaseConnection
+from home_access.users.user_repository import UserRepository
+import time
+
+connection = DatabaseConnection().connect()
 
 # Face Code
 def Code_Face(images):
@@ -92,198 +97,200 @@ def Profile():
 def Log_Biometric():
     global pantalla, pantalla2, conteo, parpadeo, img_info, step
 
-    # Leemos la videocaptura
-    if cap is not None:
-        ret, frame = cap.read()
+    if cap is None:
+        return
 
-        # Frame Save
-        frameSave = frame.copy()
+    ret, frame = cap.read()
 
-        # RGB
-        frameRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # Frame Save
+    frameSave = frame.copy()
 
-        # Show
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    # RGB
+    frameRGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        # Si es correcta
-        if ret == True:
+    # Show
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            # Inference
-            res = FaceMesh.process(frameRGB)
+    # Si es correcta
+    if ret == False:
+        cap.release()
+        return
 
-            # List Results
-            px = []
-            py = []
-            lista = []
-            r = 5
-            t = 3
+    # Inference
+    res = FaceMesh.process(frameRGB)
 
-            # Resultados
-            if res.multi_face_landmarks:
-                # Iteramos
-                for rostros in res.multi_face_landmarks:
+    # List Results
+    px = []
+    py = []
+    lista = []
+    r = 5
+    t = 3
 
-                    # Draw Face Mesh
-                    mpDraw.draw_landmarks(frame, rostros, FacemeshObject.FACEMESH_TESSELATION, ConfigDraw, ConfigDraw)
+    if not res.multi_face_landmarks:
+        return
 
-                    # Extract KeyPoints
-                    for id, puntos in enumerate(rostros.landmark):
+    # Iteramos
+    for rostros in res.multi_face_landmarks:
+        # Draw Face Mesh
+        mpDraw.draw_landmarks(frame, rostros, FacemeshObject.FACEMESH_TESSELATION, ConfigDraw, ConfigDraw)
 
-                        # Info IMG
-                        al, an, c = frame.shape
-                        x, y = int(puntos.x * an), int(puntos.y * al)
-                        px.append(x)
-                        py.append(y)
-                        lista.append([id, x, y])
+        # Extract KeyPoints
+        for id, puntos in enumerate(rostros.landmark):
 
-                        # 468 KeyPoints
-                        if len(lista) == 468:
-                            # Ojo derecho
-                            x1, y1 = lista[145][1:]
-                            x2, y2 = lista[159][1:]
-                            cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
-                            longitud1 = math.hypot(x2 - x1, y2 - y1)
-                            #print(longitud1)
+            # Info IMG
+            al, an, c = frame.shape
+            x, y = int(puntos.x * an), int(puntos.y * al)
+            px.append(x)
+            py.append(y)
+            lista.append([id, x, y])
 
-                            # Ojo Izquierdo
-                            x3, y3 = lista[374][1:]
-                            x4, y4 = lista[386][1:]
-                            cx2, cy2 = (x3 + x4) // 2, (y3 + y4) // 2
-                            longitud2 = math.hypot(x4 - x3, y4 - y3)
-                            #print(longitud2)
+            # 468 KeyPoints
+            if len(lista) == 468:
+                # Ojo derecho
+                x1, y1 = lista[145][1:]
+                x2, y2 = lista[159][1:]
+                cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+                longitud1 = math.hypot(x2 - x1, y2 - y1)
+                #print(longitud1)
 
-                            # Parietal Derecho
-                            x5, y5 = lista[139][1:]
-                            # Parietal Izquierdo
-                            x6, y6 = lista[368][1:]
+                # Ojo Izquierdo
+                x3, y3 = lista[374][1:]
+                x4, y4 = lista[386][1:]
+                cx2, cy2 = (x3 + x4) // 2, (y3 + y4) // 2
+                longitud2 = math.hypot(x4 - x3, y4 - y3)
+                #print(longitud2)
 
-                            # Ceja Derecha
-                            x7, y7 = lista[70][1:]
-                            # Ceja Izquierda
-                            x8, y8 = lista[300][1:]
+                # Parietal Derecho
+                x5, y5 = lista[139][1:]
+                # Parietal Izquierdo
+                x6, y6 = lista[368][1:]
 
-                            #cv2.circle(frame, (x5, y5), 2, (255, 0, 0), cv2.FILLED)
-                            #cv2.circle(frame, (x6, y6), 2, (0, 0, 0), cv2.FILLED)
-                            #cv2.circle(frame, (x7, y7), 2, (0, 255, 0), cv2.FILLED)
-                            #cv2.circle(frame, (x8, y8), 2, (0, 255, 0), cv2.FILLED)
+                # Ceja Derecha
+                x7, y7 = lista[70][1:]
+                # Ceja Izquierda
+                x8, y8 = lista[300][1:]
 
-                            # Face Detect
-                            faces = detector.process(frameRGB)
+                #cv2.circle(frame, (x5, y5), 2, (255, 0, 0), cv2.FILLED)
+                #cv2.circle(frame, (x6, y6), 2, (0, 0, 0), cv2.FILLED)
+                #cv2.circle(frame, (x7, y7), 2, (0, 255, 0), cv2.FILLED)
+                #cv2.circle(frame, (x8, y8), 2, (0, 255, 0), cv2.FILLED)
 
-                            if faces.detections is not None:
-                                for face in faces.detections:
+                # Face Detect
+                faces = detector.process(frameRGB)
 
-                                    # bboxInfo - "id","bbox","score","center"
-                                    score = face.score
-                                    score = score[0]
-                                    bbox = face.location_data.relative_bounding_box
+                if faces.detections is not None:
+                    for face in faces.detections:
 
-                                    # Threshold
-                                    if score > confThreshold:
-                                        # Info IMG
-                                        alimg, animg, c = frame.shape
+                        # bboxInfo - "id","bbox","score","center"
+                        score = face.score
+                        score = score[0]
+                        bbox = face.location_data.relative_bounding_box
 
-                                        # Coordenates
-                                        xi, yi, an, al = bbox.xmin, bbox.ymin, bbox.width, bbox.height
-                                        xi, yi, an, al = int(xi * animg), int(yi * alimg), int(
-                                            an * animg), int(al * alimg)
+                        # Threshold
+                        if score > confThreshold:
+                            # Info IMG
+                            alimg, animg, c = frame.shape
 
-                                        # Width
-                                        offsetan = (offsetx / 100) * an
-                                        xi = int(xi - int(offsetan/2))
-                                        an = int(an + offsetan)
-                                        xf = xi + an
+                            # Coordenates
+                            xi, yi, an, al = bbox.xmin, bbox.ymin, bbox.width, bbox.height
+                            xi, yi, an, al = int(xi * animg), int(yi * alimg), int(
+                                an * animg), int(al * alimg)
 
-                                        # Height
-                                        offsetal = (offsety / 100) * al
-                                        yi = int(yi - offsetal)
-                                        al = int(al + offsetal)
-                                        yf = yi + al
+                            # Width
+                            offsetan = (offsetx / 100) * an
+                            xi = int(xi - int(offsetan/2))
+                            an = int(an + offsetan)
+                            xf = xi + an
 
-                                        # Error < 0
-                                        if xi < 0: xi = 0
-                                        if yi < 0: yi = 0
-                                        if an < 0: an = 0
-                                        if al < 0: al = 0
+                            # Height
+                            offsetal = (offsety / 100) * al
+                            yi = int(yi - offsetal)
+                            al = int(al + offsetal)
+                            yf = yi + al
 
-                                    # Steps
-                                    if step == 0:
-                                        # Draw
-                                        cv2.rectangle(frame, (xi, yi, an, al), (255, 0, 255), 2)
-                                        # IMG Step0
-                                        alis0, anis0, c = img_step0.shape
-                                        frame[50:50 + alis0, 50:50 + anis0] = img_step0
+                            # Error < 0
+                            if xi < 0: xi = 0
+                            if yi < 0: yi = 0
+                            if an < 0: an = 0
+                            if al < 0: al = 0
 
-                                        # IMG Step1
-                                        alis1, anis1, c = img_step1.shape
-                                        frame[50:50 + alis1, 1030:1030 + anis1] = img_step1
+                        # Steps
+                        if step == 0:
+                            # Draw
+                            cv2.rectangle(frame, (xi, yi, an, al), (255, 0, 255), 2)
+                            # IMG Step0
+                            alis0, anis0, c = img_step0.shape
+                            frame[50:50 + alis0, 50:50 + anis0] = img_step0
 
-                                        #IMG Step2
-                                        alis2, anis2, c = img_step2.shape
-                                        frame[270:270 + alis2, 1030:1030 + anis2] = img_step2
+                            # IMG Step1
+                            alis1, anis1, c = img_step1.shape
+                            frame[50:50 + alis1, 1030:1030 + anis1] = img_step1
 
-                                        # Condiciones
-                                        if x7 > x5 and x8 < x6:
+                            #IMG Step2
+                            alis2, anis2, c = img_step2.shape
+                            frame[270:270 + alis2, 1030:1030 + anis2] = img_step2
 
-                                            # Cont Parpadeos
-                                            if longitud1 <= 10 and longitud2 <= 10 and parpadeo == False:  # Parpadeo
-                                                conteo = conteo + 1
-                                                parpadeo = True
+                            # Condiciones
+                            if x7 > x5 and x8 < x6:
 
-                                            elif longitud1 > 10 and longitud2 > 10 and parpadeo == True:  # Seguridad parpadeo
-                                                parpadeo = False
+                                # Cont Parpadeos
+                                if longitud1 <= 10 and longitud2 <= 10 and parpadeo == False:  # Parpadeo
+                                    conteo = conteo + 1
+                                    parpadeo = True
 
-                                            # IMG check
-                                            alich, anich, c = img_check.shape
-                                            frame[165:165 + alich, 1105:1105 + anich] = img_check
+                                elif longitud1 > 10 and longitud2 > 10 and parpadeo == True:  # Seguridad parpadeo
+                                    parpadeo = False
 
-                                            # Parpadeos
-                                            # Conteo de parpadeos
-                                            cv2.putText(frame, f'Parpadeos: {int(conteo)}', (1070, 375), cv2.FONT_HERSHEY_COMPLEX,0.5,
-                                                        (255, 255, 255), 1)
+                                # IMG check
+                                alich, anich, c = img_check.shape
+                                frame[165:165 + alich, 1105:1105 + anich] = img_check
 
-
-                                            if conteo >= 3:
-                                                # IMG check
-                                                alich, anich, c = img_check.shape
-                                                frame[385:385 + alich, 1105:1105 + anich] = img_check
-
-                                                # Open Eyes
-                                                if longitud1 > 14 and longitud2 > 14:
-                                                    # Cut
-                                                    cut = frameSave[yi:yf, xi:xf]
-                                                    # Save Image Without Draw
-                                                    cv2.imwrite(f"{OutFolderPathFace}/{RegUser}.png", cut)
-                                                    # Cerramos
-                                                    step = 1
-                                        else:
-                                            conteo = 0
-
-                                    if step == 1:
-                                        # Draw
-                                        cv2.rectangle(frame, (xi, yi, an, al), (0, 255, 0), 2)
-                                        # IMG check Liveness
-                                        allich, anlich, c = img_liche.shape
-                                        frame[50:50 + allich, 50:50 + anlich] = img_liche
+                                # Parpadeos
+                                # Conteo de parpadeos
+                                cv2.putText(frame, f'Parpadeos: {int(conteo)}', (1070, 375), cv2.FONT_HERSHEY_COMPLEX,0.5,
+                                            (255, 255, 255), 1)
 
 
-                            # Close Window
-                            close = pantalla2.protocol("WM_DELETE_WINDOW", Close_Windows)
+                                if conteo >= 3:
+                                    # IMG check
+                                    alich, anich, c = img_check.shape
+                                    frame[385:385 + alich, 1105:1105 + anich] = img_check
 
-            # Rendimensionamos el video
-            frame = imutils.resize(frame, width=1280)
+                                    # Open Eyes
+                                    if longitud1 > 14 and longitud2 > 14:
+                                        # Cut
+                                        cut = frameSave[yi:yf, xi:xf]
+                                        # Save Image Without Draw
+                                        cv2.imwrite(f"{OutFolderPathFace}/{RegUser}.png", cut)
+                                        pantalla2.setvar("image_path", f"{OutFolderPathFace}/{RegUser}.png")
+                                        # Cerramos
+                                        step = 1
+                            else:
+                                conteo = 0
 
-            # Convertimos el video
-            im = Image.fromarray(frame)
-            img = ImageTk.PhotoImage(image=im)
+                        if step == 1:
+                            # Draw
+                            cv2.rectangle(frame, (xi, yi, an, al), (0, 255, 0), 2)
+                            # IMG check Liveness
+                            allich, anlich, c = img_liche.shape
+                            frame[50:50 + allich, 50:50 + anlich] = img_liche
+                            pantalla2.after(5000, Close_Windows)
+                            break
 
-            # Mostramos en el GUI
-            lblVideo.configure(image=img)
-            lblVideo.image = img
-            lblVideo.after(10, Log_Biometric)
+                # close = pantalla2.protocol("WM_DELETE_WINDOW", Close_Windows())
 
-        else:
-            cap.release()
+    # Rendimensionamos el video
+    frame = imutils.resize(frame, width=1280)
+
+    # Convertimos el video
+    im = Image.fromarray(frame)
+    img = ImageTk.PhotoImage(image=im)
+
+    # Mostramos en el GUI
+    lblVideo.configure(image=img)
+    lblVideo.image = img
+    lblVideo.after(10, Log_Biometric)
+
 
 # Sign Biometric
 def Sign_Biometric():
@@ -613,6 +620,19 @@ def Log():
             cap.set(3, 1280)
             cap.set(4, 720)
             Log_Biometric()
+
+            pantalla2.wait_variable('image_path')
+            image_path = pantalla2.getvar('image_path')
+
+            userRepository = UserRepository(connection)
+
+            if image_path is not None:
+                userRepository.create(
+                    name=RegName,
+                    password=RegPass,
+                    user=RegUser,
+                    file_path=image_path,
+                )
 
 
 # Path
