@@ -12,6 +12,7 @@ from database import DatabaseConnection
 from home_access.users.user_repository import UserRepository
 from home_access.entrances.entrance_repository import EntranceRepository
 import uuid
+import serial
 
 connection = DatabaseConnection().connect()
 userRepository = UserRepository(connection)
@@ -59,14 +60,20 @@ def Profile(username, image_path):
     user = userRepository.find_user_by_username(username)
 
     if user:
+
+        # abrir la puerta
+        ser = serial.Serial('COM3', 9600)
+        ser.write(b'1')
+
         user_id = user[0]
         name = user[1]
         username = user[2]
         allowed = True
-
         print_allowed_screen(username, name)
 
+
     entranceRepository.create(user_id, file_path, allowed)
+
 
 def print_allowed_screen(username, name):
     pantalla4 = Toplevel(pantalla)
