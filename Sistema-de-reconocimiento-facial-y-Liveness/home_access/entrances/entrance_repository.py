@@ -31,7 +31,24 @@ class EntranceRepository():
     return self.cursor.fetchall()
   
   def find(self):
-    sql = 'SELECT * FROM entrance WHERE DATE(date) = CURRENT_DATE ORDER BY "date" DESC'
+    sql = """
+      SELECT 
+        e.id::text as id, 
+          CASE 
+            WHEN u.name IS NOT NULL 
+              THEN u.name 
+              ELSE 'Desconocido' 
+          END as name, 
+          to_char(e."date", 'HH24:MI:SS') as date, 
+          CASE 
+            WHEN e.allowed = true 
+              THEN 'Permitido' 
+              ELSE 'Denegado' 
+          END as allowed
+      FROM entrance e LEFT JOIN "user" u ON u.id = e.user_id 
+      WHERE DATE(e.date) = CURRENT_DATE 
+      ORDER BY e."date" DESC
+    """
 
     self.cursor.execute(sql)
     return self.cursor.fetchall()
