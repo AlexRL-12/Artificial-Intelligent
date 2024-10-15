@@ -1,4 +1,5 @@
 # Libreries
+import time
 from tkinter import *
 import cv2
 import numpy as np
@@ -62,8 +63,11 @@ def Profile(username, image_path):
     if user:
         try:
             # abrir la puerta
-            ser = serial.Serial('COM3', 9600)
+            ser = serial.Serial("COM3", 9600,timeout=1)
+            time.sleep(2)
             ser.write(b'1')
+        
+            print("Puerta abierta")
         except:
             print("Something else went wrong")
 
