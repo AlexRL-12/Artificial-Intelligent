@@ -60,10 +60,12 @@ def Profile(username, image_path):
     user = userRepository.find_user_by_username(username)
 
     if user:
-
-        # abrir la puerta
-        ser = serial.Serial('COM3', 9600)
-        ser.write(b'1')
+        try:
+            # abrir la puerta
+            ser = serial.Serial('COM3', 9600)
+            ser.write(b'1')
+        except:
+            print("Something else went wrong")
 
         user_id = user[0]
         name = user[1]
